@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <title>bindview.js</title>
+
+    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="js/class.js"></script>
+    <script type="text/javascript" src="js/bindview.js"></script>
+
+    <style type="text/css">
+
+        .demo
+        {
+            border: 1px solid #ccc;
+            background: #eee;
+            padding: 1em;
+            margin: 1em;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>bindview.js</h1>
+
+<h2>basic demo</h2>
+
+    <div id="demo1" class="demo">
+        Name:
+        <input type="text" bind-value="name" />
+        <h3>Hello {{ name }}!</h3>
+    </div>
+
+    <script type="text/javascript">
+
+        $(function ()
+        {
+            $('#demo1').bindview ({name: ''});
+        });
+
+    </script>
+
+</body>
+
+</html>
