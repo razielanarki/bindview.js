@@ -28,10 +28,24 @@ Define a view:
 Activate the binding:
 ```
 #!js
-$('bindto').bindview ({ name: 'John Finch' });
+$('#bindto').bindview ({ name: 'John Finch' });
 ```
 
 ## Features
+
+### POJO binding
+
+bindiew.js binds to Plain Old Javascipr Objects, so there's no need to use some
+propiretary library to wrap the model.
+
+```
+#!js
+$('#bindto').bindview
+({
+    name: 'John Finch',
+    articles: [ { ... }, ...],
+});
+```
 
 ### Binders
 

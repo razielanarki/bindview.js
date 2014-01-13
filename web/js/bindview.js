@@ -1109,7 +1109,4 @@
 
     var watcher = new Watcher ();
 
-    global.watcher = watcher;
-
-
 })(jQuery, window);
