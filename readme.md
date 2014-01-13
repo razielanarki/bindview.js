@@ -1,15 +1,15 @@
-# bindiew.js
+# bindview.js
 
 Simple and flexible DOM data binding and DOM templating library.
 
-Based on ideas from Rivets.js and Angular.js.
+Based on some ideas from [rivets.js](http://www.rivetsjs.com/) and [angular.js](http://angularjs.org/),
 written in plain javascript.
 
-## Requirements
+## Requires
 
 - IE8+ / FF / Chrome
 - jQuery
-- http://ejohn.org/blog/simple-javascript-inheritance/ (included)
+- <http://ejohn.org/blog/simple-javascript-inheritance/> (included)
 
 ## Quick usage example
 
