@@ -892,51 +892,51 @@
             for (var i = 0, binding; binding = this.bindings[i]; i++)
                 binding.unbind ();
         },
-        parse: function (element, scope)
+        parse: function (node, scope)
         {
-            for (var node = element.firstChild; node; node = node.nextSibling)
+            if (node.nodeType == 3)
             {
-                if (node.nodeType == 3)
+                var text  = $(node).text (),
+                    re    = new RegExp('(?:\\{\\{(.*?)\\}\\})', 'g'),
+                    delta = 0,
+                    match;
+
+                if (text.trim () && (re.test (text)))
                 {
-                    var text  = $(node).text (),
-                        re    = new RegExp('(?:\\{\\{(.*?)\\}\\})', 'g'),
-                        delta = 0,
-                        match;
-
-                    if (text.trim () && (re.test (text)))
+                    re.lastIndex = 0;
+                    while (match = re.exec (text))
                     {
-                        re.lastIndex = 0;
-                        while (match = re.exec (text))
-                        {
-                            var token = node.splitText (match.index - delta);
-                            node = token.splitText (match[0].length);
-                            delta = match.index + match[0].length;
+                        var token = node.splitText (match.index - delta);
+                        node = token.splitText (match[0].length);
+                        delta = match.index + match[0].length;
 
-                            this.bindings.push
-                            (
-                                new $.fn.bindview.defaults.binders['text']
-                                (this, scope, token, 'text', undefined, match[1].trim ())
-                            );
-                        }
+                        this.bindings.push
+                        (
+                            new $.fn.bindview.defaults.binders['text']
+                            (this, scope, token, 'text', undefined, match[1].trim ())
+                        );
                     }
                 }
-                else
-                if (node.attributes != null)
+            }
+            else
+            if (node.attributes != null)
+            {
+                var block = false;
+
+                for (var j = 0, attr; attr = node.attributes[j]; j++)
                 {
-                    var block = false;
-
-                    for (var j = 0, attr; attr = node.attributes[j]; j++)
+                    if (this.prefix.test (attr.name))
                     {
-                        if (this. prefix.test (attr.name))
-                        {
-                            var binder = this.bind_attr (scope, node, attr);
-                            this.bindings.push (binder);
-                            block == block || binder.block;
-                        }
+                        var binder = this.bind_attr (scope, node, attr);
+                        this.bindings.push (binder);
+                        block = (block || binder.block);
                     }
+                }
 
-                    if (!block)
-                        this.parse (node, scope);
+                if (!block)
+                {
+                    for (var child = node.firstChild; child; child = child.nextSibling)
+                        this.parse (child, scope);
                 }
             }
         },
@@ -987,6 +987,15 @@
                     render: function (value)
                     {
                         $(this.element).attr (this.type, (value || undefined));
+                    }
+                }),
+            'show': Binder.extend
+                ({
+                    render: function (value)
+                    {
+                        (value
+                            ? $(this.element).show ()
+                            : $(this.element).hide ());
                     }
                 }),
             'text': Binder.extend
