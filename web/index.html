@@ -33,17 +33,44 @@
     <div id="demo1" class="demo">
         Name:
         <input type="text" bind-value="name" />
-        <h3>Hello {{ name }}!</h3>
+        <h3>Hello {{ name }}! <small>({{ name.length }})</small></h3>
     </div>
 
     <script type="text/javascript">
 
         $(function ()
         {
-            $('#demo1').bindview ({name: ''});
+            $('#demo1').bindview
+            ({
+                name: ''
+            });
         });
 
     </script>
+
+    <h2>repeater</h2>
+
+        <div id="demo2" class="demo">
+            <ul bind-repeat-item="list">
+                <li>
+                    {{ item }}
+                    <button bind-on-click="$parent.list.splice" bind-data-on-click="[$index, 1]">remove</button>
+                </li>
+            </ul>
+            <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
+        </div>
+
+        <script type="text/javascript">
+
+            $(function ()
+            {
+                $('#demo2').bindview
+                ({
+                    list: ['elev', 'even', 'elem', 'ents']
+                });
+            });
+
+        </script>
 
 </body>
 

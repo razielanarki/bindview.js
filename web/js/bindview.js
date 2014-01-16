@@ -97,7 +97,7 @@
                 map = this.map (array),
                 self = this;
 
-            array[method] = function ()
+            array[method] = (function ()
             {
                 var result = original.apply (this, arguments);
 
@@ -111,7 +111,7 @@
                     }
                 }
                 return result;
-            }
+            }).bind (array);
         },
         watch_mutations: function (array, id, property)
         {
