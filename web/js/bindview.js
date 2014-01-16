@@ -42,6 +42,24 @@
         // --------
         watch: function (object, property, handler)
         {
+            if ($.isArray (object) && property == 'length')
+            {
+                var map = this.map (object);
+                map.ref = { ref: object, handler: function (ref) { handler (ref.length); } };
+                this.watch (map.ref, 'ref', map.ref.handler);
+                return;
+            }
+
+            var descriptor = Object.getOwnPropertyDescriptor (object, property);
+
+            if (descriptor
+                && (!descriptor.configurable
+                    || (descriptor.value === undefined && !descriptor.get)
+                    || descriptor.writable === false))
+            {
+                return;
+            }
+
             var callbacks = this.map (object).callbacks;
 
             if (callbacks[property] == null)
@@ -80,6 +98,14 @@
         },
         unwatch: function (object, property, handler)
         {
+            if ($.isArray (object) && property == 'length')
+            {
+                var map = this.map (object);
+                if (map.ref)
+                    this.unwatch (map.ref, 'ref', map.ref.handler);
+                return;
+            }
+
             var callbacks= this.map (object).callbacks[property];
 
             if (handler)
@@ -110,6 +136,7 @@
                             callback (this);
                     }
                 }
+
                 return result;
             }).bind (array);
         },
@@ -335,16 +362,15 @@
             this.lval = lval;
             this.name = name;
 
-            this.readonly = !$.isPlainObject (this.lval.value)
+            this.readonly = (!$.isPlainObject (this.lval.value)
+                                && !$.isArray (this.lval.value))
                             || $.isFunction (this.lval.value[this.name]);
 
             this.update = this.update.bind (this);
             this.update ();
-            //this.checkconst (this.update, this.lval);
 
             if (!this.readonly)
                 watcher.watch (this.lval.value, this.name, this.update);
-
         },
         update: function ()
         {
@@ -365,7 +391,8 @@
             this.lval = lval;
             this.rval = rval;
 
-            this.readonly = !$.isArray (this.lval.value)
+            this.readonly = (!$.isPlainObject (this.lval.value)
+                                && !$.isArray (this.lval.value))
                             || $.isFunction (this.lval.value[this.rval.value]);
 
             this.update = this.update.bind (this);

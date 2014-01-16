@@ -33,7 +33,7 @@
     <div id="demo1" class="demo">
         Name:
         <input type="text" bind-value="name" />
-        <h3>Hello {{ name }}! <small>({{ name.length }})</small></h3>
+        <h3 bind-show="name">Hey ummm.... {{ name.toUpperCase() }}! Hello!</h3>
     </div>
 
     <script type="text/javascript">
