@@ -2,9 +2,13 @@
 // bindview.js
 //---------------------------------------------------------
 
-(function ($, global, undefined)
+(function ($, global, document, undefined)
 {
     'use strict';
+
+    //-----------------------------------------------------
+    // Watcher API
+    //-----------------------------------------------------
 
     var Watcher = Class.extend
     ({
@@ -144,6 +148,8 @@
         }
     });
 
+    //-----------------------------------------------------
+    // Parser API
     //-----------------------------------------------------
 
     var terminals =
@@ -469,7 +475,7 @@
         }
     });
 
-    //name (expr, ... )
+    // name (expr, ... )
     var CallExpr = Expr.extend
     ({
         init: function (lval, args, scope)
@@ -730,6 +736,8 @@
                     value = null;
                     break;
 
+                // --------
+
                 case 'lbracket':
                     return this.parse_array_literal ();
                     break;
@@ -817,6 +825,8 @@
 
     var parser = new Parser ();
 
+    //-----------------------------------------------------
+    // Binding API
     //-----------------------------------------------------
 
     var Binder = Class.extend
@@ -1002,7 +1012,7 @@
                 ({
                     render: function (value)
                     {
-                        value = (value != null ? value : '');
+                        value = (value || '');
                         return (this.element.textContent != null
                             ? (this.element.textContent = value)
                             : (this.element.innerText = value));
@@ -1053,7 +1063,7 @@
                             {
                                 var args = $(self.element).data (self.type);
                                 args = ($.isArray (args) ? args : [ args ]);
-                                value.apply (self, [ event ].concat (args));
+                                return value.apply (self, args);
                             }));
                     }
                 }),
@@ -1099,8 +1109,8 @@
                                 continue;
                             }
 
-                            var frag     = this.template.cloneNode (true),
-                                elements = $(frag.childNodes),
+                            var fragment = this.template.cloneNode (true),
+                                elements = $(fragment.childNodes),
                                 scope    = {};
 
                             scope['$parent'] = this.scope;
@@ -1109,7 +1119,7 @@
 
                             this.iterated.push (new View (elements, scope));
 
-                            this.element.appendChild (frag);
+                            this.element.appendChild (fragment);
                         }
                     }
                 })
@@ -1118,4 +1128,4 @@
 
     var watcher = new Watcher ();
 
-})(jQuery, window);
+})(jQuery, window, document);
