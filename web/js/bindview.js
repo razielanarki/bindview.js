@@ -794,9 +794,12 @@
                 case 'name':
                     this.next();
                     var name = token.value;
+                    var scope = this.scope;
+                    while (!scope.hasOwnProperty (name) && scope.$parent)
+                        scope = scope.$parent;
                     return (new PropertyAccess
                         (
-                            { value: this.scope, isconst: false },
+                            { value: scope, isconst: false },
                             token.value
                         ))
                     break;
@@ -1061,6 +1064,17 @@
                     render: function (value)
                     {
                         $(this.element).html (value || '');
+                    }
+                }),
+            'to': Binder.extend
+                ({
+                    attach: function ()
+                    {
+                        $(this.element).on ('change keyup blur', this.publish);
+                    },
+                    detach: function ()
+                    {
+                        $(this.element).off ('change keyup blur', this.publish);
                     }
                 }),
             'value': Binder.extend

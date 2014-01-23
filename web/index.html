@@ -55,7 +55,7 @@
                 <li>
                     {{ item }}
                     <input bind-value="item" />
-                    <button bind-on-click="$parent.list.splice" bind-data-on-click="[$index, 1]">remove</button>
+                    <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
                 </li>
             </ul>
             <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
@@ -116,6 +116,50 @@
 
         </script>
 
+        <div id="demo4" class="demo">
+            <div bind-repeat-option="options">
+                <label>
+                    <input type="radio" name="options" bind-to="selected" bind-value="$index" />
+                    {{ option }}
+                </label>
+                <br />
+            </div>
+            : {{ ''+selected }} :
+            <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
+            <button bind-on-click="swap">change</button>
+            <button bind-on-click="log">log</button>
+            <button bind-on-click="reset">reset</button>
+        </div>
+
+        <script type="text/javascript">
+
+            $(function ()
+            {
+                var scope =
+                {
+                    selected : 1,
+                    options  : ['option1', 'option2', 'option3'],
+                    options2 : ['hello', 'kitty', 'y are u', 'gritty'],
+                    swap : function ()
+                    {
+                        var t = scope.options;
+                        scope.options  = scope.options2;
+                        scope.options2 = t;
+                    },
+                    reset: function ()
+                    {
+                        scope.selected = 0;
+                    },
+                    log: function ()
+                    {
+                        console.log ('log', this, scope);
+                    },
+                }
+
+                $('#demo4').bindview (scope);
+            });
+
+        </script>
 </body>
 
 </html>
