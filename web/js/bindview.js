@@ -42,14 +42,17 @@
         // --------
         watch: function (object, property, handler)
         {
+            // -- array length
             if ($.isArray (object) && property == 'length')
             {
                 var map = this.map (object);
+                // this is a not-so-weak reference
                 map.ref = { ref: object, handler: function (ref) { handler (ref.length); } };
                 this.watch (map.ref, 'ref', map.ref.handler);
                 return;
             }
 
+            // -- watch
             var descriptor = Object.getOwnPropertyDescriptor (object, property);
 
             if (descriptor
@@ -62,7 +65,7 @@
 
             var callbacks = this.map (object).callbacks;
 
-            if (callbacks[property] == null)
+            if (!$.isArray (callbacks[property]))
             {
                 var value = object[property],
                     self  = this;
@@ -98,15 +101,23 @@
         },
         unwatch: function (object, property, handler)
         {
+            // -- array length
             if ($.isArray (object) && property == 'length')
             {
                 var map = this.map (object);
                 if (map.ref)
+                {
                     this.unwatch (map.ref, 'ref', map.ref.handler);
+                    delete map.ref; // delete the not-so-weak reference
+                }
                 return;
             }
 
+            // -- unwatch
             var callbacks= this.map (object).callbacks[property];
+
+            if (!$.isArray (callbacks))
+                return;
 
             if (handler)
             {

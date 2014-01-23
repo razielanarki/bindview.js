@@ -61,9 +61,9 @@ changes, or when the user interacts with the DOM.
 
 ```
 #!html
-<p class="lead">{{ article.lead.substr(0, 100) + '...' }}</p>
+<p class="lead">{{ article.lead.substr(0, 100) }}...</p>
 
 ```
 
-You can use complex expressions in bindings, to help augment your view with some presentational logic.
+You can use simple expressions in bindings, to help augment your view with some presentational logic.
 
