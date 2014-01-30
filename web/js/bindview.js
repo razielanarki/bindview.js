@@ -1125,7 +1125,7 @@
                     attach: function ()
                     {
                         this.template = document.createDocumentFragment ();
-                        this.iterated = [];
+                        this.iterated = {};
 
                         var node = this.element.firstChild,
                             next = node.nextSibling;
@@ -1143,35 +1143,58 @@
                     },
                     render: function (collection)
                     {
-                        collection = collection || [];
+                        collection = collection || {};
 
-                        while (this.iterated.length > collection.length)
+                        // update props
+                        for (var prop in collection)
                         {
-                            var view = this.iterated.pop ();
-                            view.unbind ();
-                            view.element.remove ();
-                        }
+                            // only iterate numeric array props
+                            if ($.isArray (collection)
+                                && (String (prop >>> 0) != prop
+                                || prop >>> 0 == 0xffffffff))
+                                continue;
 
-                        for (var i = 0, item; item = collection[i]; i++)
-                        {
-                            if (this.iterated[i])
+                            // only iterate own properties
+                            if (!({}).hasOwnProperty.call (collection, prop))
+                                continue;
+
+                            var item = collection[prop];
+
+                            // update item if already present
+                            if (({}).hasOwnProperty.call (this.iterated, prop))
                             {
                                 if (typeof (item) != 'object')
-                                    this.iterated[i].scope[this.arg] = item;
+                                    this.iterated[prop].scope[this.arg] = item;
                                 continue;
                             }
 
+                            // or create a new subview
                             var fragment = this.template.cloneNode (true),
                                 elements = $(fragment.childNodes),
                                 scope    = {};
 
                             scope['$parent'] = this.scope;
-                            scope['$index']  = i;
+                            scope['$index']  = prop;
+                            scope['$key']    = prop;
                             scope[this.arg]  = item;
 
-                            this.iterated.push (new View (elements, scope));
+                            this.iterated[prop] = new View (elements, scope);
 
                             this.element.appendChild (fragment);
+                        }
+
+                        // remove old props not present in new collection
+                        for (var prop in this.iterated)
+                        {
+                            if (!({}).hasOwnProperty.call (this.iterated, prop))
+                                continue;
+
+                            if (({}).hasOwnProperty.call (collection, prop))
+                                continue;
+
+                            this.iterated[prop].unbind ();
+                            this.iterated[prop].element.remove ();
+                            delete this.iterated[prop];
                         }
                     }
                 })
