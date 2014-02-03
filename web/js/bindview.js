@@ -326,7 +326,7 @@
             this.isconst = true;
             for (var i = 0, expr; expr = exprs[i]; i++)
             {
-                this.isconst = this.isconst && expr.isconst;
+                this.isconst = this.isconst && !!expr.isconst;
 
                 if (!expr.isconst)
                     watcher.watch (expr, 'value', update)
@@ -379,18 +379,30 @@
 
             this.update = this.update.bind (this);
             this.update ();
-
-            if (!this.readonly)
-                watcher.watch (this.lval.value, this.name, this.update);
+            this.checkconst (this.update, this.lval);
         },
         update: function ()
         {
-            this.value = this.lval.value[this.name];
+            if (this.object != this.lval.value)
+            {
+                if (!this.readonly
+                    && (typeof (this.object) !== 'undefined'))
+                {
+                    watcher.unwatch (this.object, this.name, this.update);
+                }
+
+                this.object = this.lval.value;
+
+                if (!this.readonly)
+                    watcher.watch (this.object, this.name, this.update);
+            }
+
+            this.value = this.object[this.name];
         },
         publish: function (value)
         {
             if (!this.readonly)
-                this.lval.value[this.name] = value;
+                this.object[this.name] = value;
         }
     });
 
@@ -412,21 +424,28 @@
         },
         update: function ()
         {
-            if (!this.readonly && (this.index != this.rval.value))
+            if ((this.array != this.lval.value) || (this.index != this.rval.value))
             {
-                if (typeof (this.index) != 'undefined')
-                    watcher.unwatch (this.lval.value, this.index, this.update);
+                if (!this.readonly
+                    && (typeof (this.array) != 'undefined')
+                    && (typeof (this.index) != 'undefined'))
+                {
+                    watcher.unwatch (this.array, this.index, this.update);
+                }
 
+                this.array = this.lval.value;
                 this.index = this.rval.value;
-                watcher.watch (this.lval.value, this.index, this.update);
+
+                if (!this.readonly)
+                    watcher.watch (this.array, this.index, this.update);
             }
 
-            this.value = this.lval.value[this.index];
+            this.value = this.array[this.index];
         },
         publish: function (value)
         {
             if (!this.readonly)
-                this.lval.value[this.index] = value;
+                this.array[this.index] = value;
         }
     });
 
@@ -793,15 +812,18 @@
 
                 case 'name':
                     this.next();
+
                     var name = token.value;
                     var scope = this.scope;
+
                     while (!scope.hasOwnProperty (name) && scope.$parent)
                         scope = scope.$parent;
+
                     return (new PropertyAccess
                         (
                             { value: scope, isconst: false },
                             token.value
-                        ))
+                        ));
                     break;
 
                 default:
@@ -1148,14 +1170,14 @@
                         // update props
                         for (var prop in collection)
                         {
+                            // only iterate own properties
+                            if (!({}).hasOwnProperty.call (collection, prop))
+                                continue;
+
                             // only iterate numeric array props
                             if ($.isArray (collection)
                                 && (String (prop >>> 0) != prop
                                 || prop >>> 0 == 0xffffffff))
-                                continue;
-
-                            // only iterate own properties
-                            if (!({}).hasOwnProperty.call (collection, prop))
                                 continue;
 
                             var item = collection[prop];
@@ -1174,8 +1196,8 @@
                                 scope    = {};
 
                             scope['$parent'] = this.scope;
-                            scope['$index']  = prop;
-                            scope['$key']    = prop;
+                            scope['$index']  = new Number (prop);
+                            scope['$key']    = new String (prop);
                             scope[this.arg]  = item;
 
                             this.iterated[prop] = new View (elements, scope);

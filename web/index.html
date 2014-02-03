@@ -48,118 +48,183 @@
 
     </script>
 
-    <h2>repeater</h2>
+<h2>repeater</h2>
 
-        <div id="demo2" class="demo">
-            <ul bind-repeat-item="list">
-                <li>
-                    {{ item }}
-                    <input bind-value="item" />
-                    <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
-                </li>
-            </ul>
-            <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
-        </div>
+    <div id="demo2" class="demo">
+        <ul bind-repeat-item="list">
+            <li>
+                {{ item }}
+                <input bind-value="item" />
+                <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
+            </li>
+        </ul>
+        <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
+    </div>
 
-        <script type="text/javascript">
+    <script type="text/javascript">
 
-            $(function ()
-            {
-                $('#demo2').bindview
-                ({
-                    list: ['elev', 'even', 'elem', 'ents']
-                });
+        $(function ()
+        {
+            $('#demo2').bindview
+            ({
+                list: ['elev', 'even', 'elem', 'ents']
             });
+        });
 
-        </script>
+    </script>
 
-    <h2>inputs</h2>
+<h2>inputs</h2>
 
-        <div id="demo3" class="demo">
-            <select bind-repeat-option="options" bind-value="selected">
-                <option bind-value="$index">{{ option }}</option>
-            </select>
-            : {{ ''+selected }} :
-            <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
-            <button bind-on-click="swap">change</button>
-            <button bind-on-click="log">log</button>
-            <button bind-on-click="reset">reset</button>
-        </div>
+    <div id="demo3" class="demo">
+        <select bind-repeat-option="options" bind-value="selected">
+            <option bind-value="$index">{{ option }}</option>
+        </select>
+        : {{ ''+selected }} :
+        <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
+        <button bind-on-click="swap">change</button>
+        <button bind-on-click="log">log</button>
+        <button bind-on-click="reset">reset</button>
+    </div>
 
-        <script type="text/javascript">
+    <script type="text/javascript">
 
-            $(function ()
+        $(function ()
+        {
+            var scope =
             {
-                var scope =
+                selected : 1,
+                options  : ['option1', 'option2', 'option3'],
+                options2 : ['hello', 'kitty', 'y are u', 'gritty'],
+                swap : function ()
                 {
-                    selected : 1,
-                    options  : ['option1', 'option2', 'option3'],
-                    options2 : ['hello', 'kitty', 'y are u', 'gritty'],
-                    swap : function ()
-                    {
-                        var t = scope.options;
-                        scope.options  = scope.options2;
-                        scope.options2 = t;
-                    },
-                    reset: function ()
-                    {
-                        scope.selected = 0;
-                    },
-                    log: function ()
-                    {
-                        console.log ('log', this, scope);
-                    },
-                }
-
-                $('#demo3').bindview (scope);
-            });
-
-        </script>
-
-        <div id="demo4" class="demo">
-            <div bind-repeat-option="options">
-                <label>
-                    <input type="radio" name="options" bind-checked="selected == $index" bind-to="selected" bind-value="$index" />
-                    {{ option }}
-                </label>
-                <br />
-            </div>
-            : {{ ''+selected }} :
-            <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
-            <button bind-on-click="swap">change</button>
-            <button bind-on-click="log">log</button>
-            <button bind-on-click="reset">reset</button>
-        </div>
-
-        <script type="text/javascript">
-
-            $(function ()
-            {
-                var scope =
+                    var t = scope.options;
+                    scope.options  = scope.options2;
+                    scope.options2 = t;
+                },
+                reset: function ()
                 {
-                    selected : 1,
-                    options  : ['option1', 'option2', 'option3'],
-                    options2 : ['hello', 'kitty', 'y are u', 'gritty'],
-                    swap : function ()
-                    {
-                        var t = scope.options;
-                        scope.options  = scope.options2;
-                        scope.options2 = t;
-                    },
-                    reset: function ()
-                    {
-                        scope.selected = 0;
-                    },
-                    log: function ()
-                    {
-                        console.log ('log', this, scope);
-                    },
+                    scope.selected = 0;
+                },
+                log: function ()
+                {
+                    console.log ('log', this, scope);
+                },
+            }
+
+            $('#demo3').bindview (scope);
+        });
+
+    </script>
+
+    <div id="demo4" class="demo">
+        <div bind-repeat-option="options">
+            <label>
+                <input type="radio" name="options" bind-checked="selected == $index" bind-to="selected" bind-value="$index" />
+                {{ option }}
+            </label>
+            <br />
+        </div>
+        : {{ ''+selected }} :
+        <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
+        <button bind-on-click="swap">change</button>
+        <button bind-on-click="log">log</button>
+        <button bind-on-click="reset">reset</button>
+    </div>
+
+    <script type="text/javascript">
+
+        $(function ()
+        {
+            var scope =
+            {
+                selected : 1,
+                options  : ['option1', 'option2', 'option3'],
+                options2 : ['hello', 'kitty', 'y are u', 'gritty'],
+                swap : function ()
+                {
+                    var t = scope.options;
+                    scope.options  = scope.options2;
+                    scope.options2 = t;
+                },
+                reset: function ()
+                {
+                    scope.selected = 0;
+                },
+                log: function ()
+                {
+                    console.log ('log', this, scope);
+                },
+            }
+
+            $('#demo4').bindview (scope);
+        });
+
+    </script>
+
+<h2>change object/array whose property/index is accessed</h2>
+
+    <div id="demo5" class="demo">
+        {{ object.field }}
+        <button bind-on-click="swap">change</button>
+        {{ to_json (object) }}
+    </div>
+
+    <script type="text/javascript">
+
+        $(function ()
+        {
+            var scope =
+            {
+                object  : { field: 'this is ONE' },
+                object2 : { field: 'this is TWO' },
+                swap : function ()
+                {
+                    var t = scope.object;
+                    scope.object  = scope.object2;
+                    scope.object2 = t;
+                },
+                to_json: function (object)
+                {
+                    return 'json: '+JSON.stringify (object, null, 4);
                 }
+            }
 
-                $('#demo4').bindview (scope);
-            });
+            $('#demo5').bindview (scope);
+        });
 
-        </script>
+    </script>
+
+    <div id="demo6" class="demo">
+        {{ array[0]}}
+        <button bind-on-click="swap">change</button>
+        {{ to_json (array) }}
+    </div>
+
+    <script type="text/javascript">
+
+        $(function ()
+        {
+            var scope =
+            {
+                array  : [ 'this is ONE' ],
+                array2 : [ 'this is TWO' ],
+                swap : function ()
+                {
+                    var t = scope.array;
+                    scope.array  = scope.array2;
+                    scope.array2 = t;
+                },
+                to_json: function (object)
+                {
+                    return 'json: '+JSON.stringify (object, null, 4);
+                }
+            }
+
+            $('#demo6').bindview (scope);
+        });
+
+    </script>
+
 </body>
 
 </html>
