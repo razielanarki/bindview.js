@@ -912,6 +912,22 @@
         },
         val: function ()
         {
+            // handle checkboxes with the same name as a multiselect
+            // (ie: return an array of selected values)
+            if (this.element.type == 'checkbox')
+            {
+                var checkboxes = $('[name='+this.element.name+']', this.element.form || document);
+
+                if (checkboxes.length > 1)
+                {
+                    return $.map (checkboxes, function (checkbox)
+                    {
+                        if ($(checkbox).is(':checked'))
+                            return checkbox.value;
+                    });
+                }
+            }
+
             return $(this.element).val ();
         },
         // --------
@@ -1053,6 +1069,7 @@
     $.fn.bindview.defaults =
     {
         prefix  : 'bind',
+        binder  : Binder,
         binders :
         {
             '*': Binder.extend
