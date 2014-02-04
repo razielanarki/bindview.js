@@ -585,6 +585,9 @@
             this.tokenize (source);
             this.scope = scope;
 
+            if (this.peek ('end'))
+                return (new ConstantExpr (null));
+
             var value = this.descent_parser (0);
             this.expect ('end');
 
