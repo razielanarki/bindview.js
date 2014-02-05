@@ -819,8 +819,14 @@
                     var name = token.value;
                     var scope = this.scope;
 
+                    // search for property on the scope chain
                     while (!scope.hasOwnProperty (name) && scope.$parent)
                         scope = scope.$parent;
+
+                    // we are at the outer scope, still not found:
+                    // create it as null
+                    if (!scope.hasOwnProperty (name))
+                        scope[name] = null;
 
                     return (new PropertyAccess
                         (
