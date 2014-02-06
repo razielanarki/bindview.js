@@ -28,6 +28,7 @@
 
 <h1>bindview.js</h1>
 
+<!--
 <h2>basic demo</h2>
 
     <div id="demo1" class="demo">
@@ -40,11 +41,11 @@
 
         $(function ()
         {
-            $('#demo1').bindview
-            ();
+            $('#demo1').bindview ();
         });
 
     </script>
+-->
 
 <h2>repeater</h2>
 
@@ -54,9 +55,16 @@
                 {{ item }}
                 <input bind-value="item" />
                 <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
+                {{ to_json (item) }}
             </li>
         </ul>
         <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
+
+        <br />
+
+        {{ to_json (list) }}
+
+        {{ list[0] }} {{ list[1] }} {{ list }}
     </div>
 
     <script type="text/javascript">
@@ -65,12 +73,17 @@
         {
             $('#demo2').bindview
             ({
-                list: ['elev', 'even', 'elem', 'ents']
+                list: [ 'elev', 'even', 'elem', 'ents'],
+                to_json: function (object)
+                {
+                    return 'json: '+JSON.stringify (object, null, 4);
+                }
             });
         });
 
     </script>
 
+<!--
 <h2>select / multiselect / input / radio</h2>
 
     <div id="demo3" class="demo">
@@ -308,6 +321,7 @@
         });
 
     </script>
+-->
 
 </body>
 

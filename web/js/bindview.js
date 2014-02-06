@@ -1069,7 +1069,6 @@
     });
 
     //-----------------------------------------------------
-
     $.fn.bindview = function (scope)
     {
         return (new View (this, scope || {}));
@@ -1095,6 +1094,13 @@
                         (value
                             ? $(this.element).show ()
                             : $(this.element).hide ());
+                    }
+                }),
+            'visible': Binder.extend
+                ({
+                    render: function (value)
+                    {
+                        $(this.element).css ('visibility', value ? 'visible' : 'hidden');
                     }
                 }),
             'text': Binder.extend
@@ -1208,13 +1214,9 @@
 
                             var item = collection[prop];
 
-                            // update item if already present
+                            // skip item if already present
                             if (({}).hasOwnProperty.call (this.iterated, prop))
-                            {
-                                if (typeof (item) != 'object')
-                                    this.iterated[prop].scope[this.arg] = item;
                                 continue;
-                            }
 
                             // or create a new subview
                             var fragment = this.template.cloneNode (true),
@@ -1225,6 +1227,27 @@
                             scope['$index']  = new Number (prop);
                             scope['$key']    = new String (prop);
                             scope[this.arg]  = item;
+
+                            // proxy changes between outer scope and subview
+                            var self = this,
+                                dnd;  // "do not disturb", prevent infinite update loop
+
+                            watcher.watch (scope, this.arg, function (value)
+                            {
+                                if (dnd) { dnd= false; return; }
+                                dnd = true;
+
+                                collection[prop] = value;
+                            });
+
+                            watcher.watch (collection, prop, function (value)
+                            {
+                                if (dnd) { dnd= false; return; }
+                                dnd = true;
+
+                                scope[self.arg] = value;
+                            })
+                            // --
 
                             this.iterated[prop] = new View (elements, scope);
 
