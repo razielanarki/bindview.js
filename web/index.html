@@ -53,16 +53,9 @@
                 {{ item }}
                 <input bind-value="item" />
                 <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
-                {{ to_json (item) }}
             </li>
         </ul>
         <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
-
-        <br />
-
-        {{ to_json (list) }}
-
-        {{ list[0] }} {{ list[1] }} {{ list }}
     </div>
 
     <script type="text/javascript">
@@ -129,6 +122,7 @@
             <label>
                 <input type="radio" name="option" bind-checked="selected == $index" bind-to="selected" bind-value="$index" />
                 {{ option }}
+                <input bind-value="option" />
             </label>
             <br />
         </div>
@@ -150,6 +144,8 @@
                 options2 : ['hello', 'kitty', 'y are u', 'gritty'],
                 swap : function ()
                 {
+                    // fixme: edge case:
+                    // array mutator watcher is not active on options2 this way
                     var t = scope.options;
                     scope.options  = scope.options2;
                     scope.options2 = t;
@@ -162,6 +158,10 @@
                 {
                     console.log ('log', this, scope);
                 },
+                to_json: function (object)
+                {
+                    return 'json: '+JSON.stringify (object, null, 4);
+                }
             }
 
             $('#demo4').bindview (scope);
@@ -202,7 +202,7 @@
                 log: function ()
                 {
                     console.log ('log', this, scope);
-                },
+                }
             }
 
             $('#demo3m').bindview (scope);
@@ -318,6 +318,7 @@
         });
 
     </script>
+
 
 </body>
 

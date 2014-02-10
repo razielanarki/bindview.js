@@ -14,7 +14,7 @@
     ({
         init: function ()
         {
-            this.id       = $.fn.bindview.defaults.prefix+'-id';
+            this.id       = $.fn.bindview.prefix+'-id';
             this.weakrefs = [];
         },
         map: function (object)
@@ -142,7 +142,7 @@
                 {
                     for (var i = 0, property; property = map.pointers[id][i]; i++)
                     {
-                        var callbacks = self.weakrefs[id] && (self.weakrefs[id].callbacks[property] || []);
+                        var callbacks = (self.weakrefs[id] && self.weakrefs[id].callbacks[property]) || [];
                         for (var j = 0, callback; callback = callbacks[j]; j++)
                             callback (this);
                     }
@@ -183,6 +183,62 @@
                 && $.isArray (map.pointers[id])
                 && map.pointers[id].indexOf (property) != -1)
                 map.pointers[id].splice (map.pointers[id].indexOf (property), -1)
+        }
+    });
+
+    var Proxy = Class.extend
+    ({
+        init : function (dst_obj, dst_prop, src_obj, src_prop)
+        {
+            this.dnd = false;
+
+            this.dst_handler = this.dst_handler.bind (this);
+            this.src_handler = this.src_handler.bind (this);
+
+            this.dst (dst_obj, dst_prop);
+            this.src (src_obj, src_prop);
+        },
+        unbind : function ()
+        {
+            this.dst (null);
+            this.src (null);
+        },
+        //--
+        src_handler : function (value)
+        {
+            if (this.dnd) { this.dnd = false; return; }
+            this.dnd = true;
+            this.dst_obj[this.dst_prop] = value;
+        },
+        dst_handler : function (value)
+        {
+            if (this.dnd) { this.dnd = false; return; }
+            this.dnd = true;
+            this.src_obj[this.src_prop] = value;
+        },
+        //--
+        dst: function (dst_obj, dst_prop)
+        {
+            if (this.dst_obj)
+                watcher.unwatch (this.dst_obj, this.dst_prop, this.dst_handler);
+
+            this.dst_obj  = dst_obj;
+            this.dst_prop = dst_prop;
+
+            if (this.dst_obj)
+                watcher.watch (this.dst_obj, this.dst_prop, this.dst_handler);
+        },
+        //--
+        src: function (src_obj, src_prop)
+        {
+            if (this.src_obj)
+                watcher.unwatch (this.src_obj, this.src_prop, this.src_handler);
+
+            this.src_obj  = src_obj;
+            this.src_prop = src_prop;
+
+            if (this.src_obj)
+                watcher.watch (this.src_obj, this.src_prop, this.src_handler);
         }
     });
 
@@ -970,7 +1026,7 @@
     ({
         init: function (element, scope)
         {
-            this.prefix   = new RegExp ('^'+$.fn.bindview.defaults.prefix+'-');
+            this.prefix   = new RegExp ('^'+$.fn.bindview.prefix+'-');
             this.element  = $(element);
             this.scope    = scope;
             this.bindings = [];
@@ -1010,7 +1066,7 @@
 
                         this.bindings.push
                         (
-                            new $.fn.bindview.defaults.binders['text']
+                            new $.fn.bindview.binders['text']
                             (this, scope, token, 'text', undefined, match[1].trim ())
                         );
                     }
@@ -1041,12 +1097,12 @@
         bind_attr:  function (scope, node, attr)
         {
             var type  = attr.name.replace (this.prefix, ''),
-                binder = $.fn.bindview.defaults.binders[type],
+                binder = $.fn.bindview.binders[type],
                 arg;
 
             if (!binder)
             {
-                for (var key in $.fn.bindview.defaults.binders)
+                for (var key in $.fn.bindview.binders)
                 {
                     if (key.indexOf ('*') > 0)
                     {
@@ -1054,7 +1110,7 @@
 
                         if (regexp.test (type))
                         {
-                            binder = $.fn.bindview.defaults.binders[key];
+                            binder = $.fn.bindview.binders[key];
                             arg = regexp.exec (type)[1];
                             break;
                         }
@@ -1062,22 +1118,23 @@
                 }
             }
 
-            binder || (binder = $.fn.bindview.defaults.binders['*']);
+            binder || (binder = $.fn.bindview.binders['*']);
 
             return new binder (this, scope, node, type, arg, attr.value)
         }
     });
 
     //-----------------------------------------------------
+
     $.fn.bindview = function (scope)
     {
         return (new View (this, scope || {}));
     }
 
-    $.fn.bindview.defaults =
+    $.extend ($.fn.bindview,
     {
         prefix  : 'bind',
-        binder  : Binder,
+        binder  : Binder, // export base binder class
         binders :
         {
             '*': Binder.extend
@@ -1212,11 +1269,17 @@
                                 || prop >>> 0 == 0xffffffff))
                                 continue;
 
-                            var item = collection[prop];
-
-                            // skip item if already present
+                            // update item if already present
+                            // rebind proxy: (re)set src to (collection, prop)
                             if (({}).hasOwnProperty.call (this.iterated, prop))
+                            {
+                                if (this.iterated[prop].scope[this.arg] != collection[prop])
+                                {
+                                    this.iterated[prop].proxy.src (collection, prop);
+                                    this.iterated[prop].scope[this.arg] = collection[prop];
+                                }
                                 continue;
+                            }
 
                             // or create a new subview
                             var fragment = this.template.cloneNode (true),
@@ -1226,30 +1289,10 @@
                             scope['$parent'] = this.scope;
                             scope['$index']  = new Number (prop);
                             scope['$key']    = new String (prop);
-                            scope[this.arg]  = item;
-
-                            // proxy changes between outer scope and subview
-                            var self = this,
-                                dnd;  // "do not disturb", prevent infinite update loop
-
-                            watcher.watch (scope, this.arg, function (value)
-                            {
-                                if (dnd) { dnd= false; return; }
-                                dnd = true;
-
-                                collection[prop] = value;
-                            });
-
-                            watcher.watch (collection, prop, function (value)
-                            {
-                                if (dnd) { dnd= false; return; }
-                                dnd = true;
-
-                                scope[self.arg] = value;
-                            })
-                            // --
+                            scope[this.arg]  = collection[prop];
 
                             this.iterated[prop] = new View (elements, scope);
+                            this.iterated[prop].proxy = new Proxy (scope, this.arg, collection, prop);
 
                             this.element.appendChild (fragment);
                         }
@@ -1263,6 +1306,7 @@
                             if (({}).hasOwnProperty.call (collection, prop))
                                 continue;
 
+                            this.iterated[prop].proxy.unbind ();
                             this.iterated[prop].unbind ();
                             this.iterated[prop].element.remove ();
                             delete this.iterated[prop];
@@ -1270,7 +1314,7 @@
                     }
                 })
         }
-    };
+    });
 
     var watcher = new Watcher ();
 

@@ -7,8 +7,8 @@ written in plain javascript.
 
 ## Requires
 
-- IE8+ / FF / Chrome
-- jQuery
+- IE9 / FF / Chrome
+- jQuery 1.10
 - <http://ejohn.org/blog/simple-javascript-inheritance/> (included)
 
 ## Quick usage example
