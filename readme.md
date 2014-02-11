@@ -5,12 +5,26 @@ Simple and flexible DOM data binding and DOM templating library.
 Based on some ideas from [rivets.js](http://www.rivetsjs.com/) and [angular.js](http://angularjs.org/),
 written in plain javascript.
 
-## Requires
+## requires
 
-- IE9 / FF / Chrome
-- jQuery 1.10
-- <http://ejohn.org/blog/simple-javascript-inheritance/> (included)
+  - IE9 / FF / Chrome
+  - jQuery 1.10
+  - <http://ejohn.org/blog/simple-javascript-inheritance/> (included)
 
+## features
+
+  - **DOM based templating**:
+    instead of string templates, bindview manipulates the DOM directly
+  - **Bi-directional data binding**:
+    update the DOM with your data, and vice versa
+  - **Expressions**:
+    a simple expression language to allow manipulating values
+  - **Iteration binding**:
+    for binding items in an array / members of an object
+  - **event handlers**:
+    for interactive UI-s
+  - **hackable API**:
+    easily extendable with new types of bindings
 ## Quick usage example
 
 Define a view:
