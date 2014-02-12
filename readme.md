@@ -15,19 +15,23 @@ written in plain javascript.
 
   - **DOM based templating**:
     instead of string templates, bindview manipulates the DOM directly
-  - **Bi-directional data binding**:
+  - **POJO binding**:
+    bindview.js bounds to _Plain Old Javascript Objects_
+  - **bi-directional data binding**:
     update the DOM with your data, and vice versa
-  - **Expressions**:
+  - **expressions**:
     a simple expression language to allow manipulating values
-  - **Iteration binding**:
+  - **iteration binding**:
     for binding items in an array / members of an object
   - **event handlers**:
-    for interactive UI-s
+    for responsive, interactive UI-s
   - **hackable API**:
     easily extendable with new types of bindings
+
 ## Quick usage example
 
 Define a view:
+
 ```
 #!html
 <div id="bindto">
@@ -40,6 +44,7 @@ Define a view:
 ```
 
 Activate the binding:
+
 ```
 #!js
 $('#bindto').bindview ({ name: 'John Finch' });
@@ -49,7 +54,7 @@ $('#bindto').bindview ({ name: 'John Finch' });
 
 ### POJO binding
 
-bindiew.js binds to Plain Old Javascipr Objects, so there's no need to use some
+bindiew.js binds to Plain Old Javascipt Objects, so there's no need to use some
 propiretary library to wrap the model.
 
 ```

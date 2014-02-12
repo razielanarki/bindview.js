@@ -15,14 +15,16 @@ written in plain javascript.
 
   - **DOM based templating**:
     instead of string templates, bindview manipulates the DOM directly
-  - **Bi-directional data binding**:
+  - **POJO binding**:
+    bindview.js bounds to _Plain Old Javascript Objects_
+  - **bi-directional data binding**:
     update the DOM with your data, and vice versa
-  - **Expressions**:
+  - **expressions**:
     a simple expression language to allow manipulating values
-  - **Iteration binding**:
+  - **iteration binding**:
     for binding items in an array / members of an object
   - **event handlers**:
-    for interactive UI-s
+    for responsive, interactive UI-s
   - **hackable API**:
     easily extendable with new types of bindings
 
@@ -108,10 +110,18 @@ the former is functionally equivalent to writing this:
 
 ### default binders
 
-#### `bind-*`
-the default binder, used if no other binder name matches.
+**note:** binders may have an argument in their name, this is marked with an `\*`.
+the argument can be anything, and it's function is explained below for each binder.
 
-updates an attibute with the expression value.
+when a binding (an attribute name starting with `bind-`) is found, the template parser
+searches for a binding with a matcing name (using `*` wildcards), and if no matching binder is found, it falls back to the default binder.
+
+#### bind-*
+the default, fallback binder, used if no other binder name matches.
+
+the _argument_ is assumed to be a html attribute name.
+
+updates the attibute with the expression value.
 
 example:
 ```
@@ -119,7 +129,7 @@ example:
 <td bind-colspan="cols.count"> ... </td>
 ```
 
-#### `bind-show`
+#### bind-show
 shows/hides an element depeding on whether the expression is truthy / falsy
 
 example:
@@ -128,11 +138,11 @@ example:
 <div bind-show="$index == (array.length - 1)"> this is the last item </div>
 ```
 
-#### `bind-visible`
+#### bind-visible
 same as `bind-show`, but toggles the visibility of an element
 (ie: the layout does not collapse around it)
 
-#### `bind-text`
+#### bind-text
 binds the result of the expression to the `textContent` of a node, escaping special characters as necessary
 
 ```
@@ -147,7 +157,7 @@ interpolated bindings, marked in the content of the nodes behave the same way
 <div> ... {{ user.about_me }} ... </div>
 ```
 
-#### `bind-html`
+#### bind-html
 binds the result of the expression to the `innertHTML` of a node.
 this does not escape special characters, and can be used to  change the dom:
 
@@ -156,7 +166,7 @@ this does not escape special characters, and can be used to  change the dom:
 <div bind-html="markdown.preview (source)"></div>
 ```
 
-#### `bind-to`
+#### bind-to
 binds the value attribute of a html element to the expression,
 (but does not bind the expression to the input field.)
 
@@ -168,7 +178,7 @@ useful if you have multiple inputs with different values, that should store thei
 <input type="radio" name="option" bind-checked="selected == 2" bind-to="selected" value="2" />
 ```
 
-#### `bind-value`
+#### bind-value
 a two-way binding for the value of the html element:
 changing the value on the element changes the bound js value, and changing the js value changes the value on the element.
 
@@ -177,41 +187,58 @@ changing the value on the element changes the bound js value, and changing the j
 <input type="text" bind-value="name" />
 ```
 
-#### `bind-data-*`
+#### bind-data-*
 binds the value of an  expression to a data attribute.
 
 well not "really", just with a jQuery `$.data()` call, so complex objects may be stored this way.
 
-```
-#!html
-<input bind-data-attribute="variable" />
-```
-
-it's also useful, if you want to pass arguments to the event handlers, the event handler reads parameters
-form the value of the matching data attribute: a single value is passed as the first argument, and an array of values are passed asmultiple arguments
+the _argument_ specifies the `key` used to store the data on the element.
 
 ```
 #!html
-<button bind-on-click="log_me" bind-data-on-click="[arg1, arg2, arg3]">log me!</button>
+<input bind-data-id="id" />
 ```
 
-#### `bind-on-*`
+#### bind-on-*
 binds a function to be executed on a specific event. the event name can be anything.
 
-**WARNING**: binding to a a _function via it's name_ (ie: `"log_me"`),
-and binding to a _result of a function call_ (ie: `"log_me()"`)  is two very different things!
-always bind to function **names** and **not calls**.
-
-**NOTE**: to pass parameters to use the `bind-data-on-*` binding syntax, see above.
+the _argument_ specifies the event name the function should handle.
 
 ```
 #!html
 <button bind-on-click="sayhello">hello?!</button>
 ```
 
-#### `bind-repeat-*`
+**WARNING**: binding to a a _function via it's name_ (ie: `"log_me"`),
+and binding to a _result of a function call_ (ie: `"log_me()"`)  is two very different things!
+always bind to function **names** and **not calls**.
 
-!fixme
+if you want to pass arguments to the event handlers, the event handler reads parameters
+form the value of the matching data attribute: a single value is passed as the first argument, and an array of values are passed asmultiple arguments:
+
+```
+#!html
+<button bind-on-click="log_me" bind-data-on-click="[arg1, arg2, arg3]">log me!</button>
+```
+
+#### bind-repeat-*
+repeats the contents of the node for each element of the array / each own property of the object referenced in the expression.
+
+```
+#!html
+<ul bind-repeat-item="items">
+    <li>{{ item }}</li>
+</ul>
+```
+
+the inner nodes are repeated using sub-views, with their own scope of variables:
+
+  - _**[argument name]**_: the current element is availabe as the name specified in the binder argument.
+  - **$key**: a `String` representation of the current index/property name
+  - **$index**: a `Number` representation of the current index (0 for property names)
+  - **$parent**: a reference to the parent scope
+
+undefined variables referenced in a child scope are searched for in the parent scope(s).
 
 ### extending bindview.js
 
