@@ -333,7 +333,6 @@
 
     //-----------------------------------------------------
 
-    // a = b
     // a + b,  a - b,
     // a * b,  a / b, a % b
     // a || b, a && b
@@ -387,6 +386,7 @@
         }
     });
 
+    // a = b
     var AssignExpr = Expr.extend
     ({
         init: function (lval, rval)
@@ -404,6 +404,7 @@
         }
     });
 
+    // a ? b : c
     var TernaryExpr = Expr.extend
     ({
         init: function (expr, lval, rval)
@@ -417,7 +418,7 @@
         },
         update: function ()
         {
-            // "unpack" object primitives
+            // unwrap primitive wrappers
             var expr = this.expr.value.valueOf
                 ? this.expr.value.valueOf ()
                 : this.expr.value;
@@ -466,18 +467,20 @@
             this.lval = lval;
             this.name = name;
 
-            this.readonly = (!$.isPlainObject (this.lval.value)
-                                && !$.isArray (this.lval.value))
-                            || $.isFunction (this.lval.value[this.name]);
-
             this.update = this.update.bind (this);
             this.checkconst (this.update, this.lval);
+        },
+        isreadonly: function (value)
+        {
+            return (!$.isPlainObject (this.object)
+                        && !$.isArray (this.object))
+                    || $.isFunction (this.object[this.name]);
         },
         update: function ()
         {
             if (this.object != this.lval.value)
             {
-                if (!this.readonly
+                if (!this.isreadonly ()
                     && (typeof (this.object) !== 'undefined'))
                 {
                     watcher.unwatch (this.object, this.name, this.update);
@@ -485,7 +488,7 @@
 
                 this.object = this.lval.value;
 
-                if (!this.readonly)
+                if (!this.isreadonly ())
                     watcher.watch (this.object, this.name, this.update);
             }
 
@@ -493,7 +496,7 @@
         },
         publish: function (value)
         {
-            if (!this.readonly)
+            if (!this.isreadonly ())
                 this.object[this.name] = value;
         }
     });
@@ -506,18 +509,20 @@
             this.lval = lval;
             this.rval = rval;
 
-            this.readonly = (!$.isPlainObject (this.lval.value)
-                                && !$.isArray (this.lval.value))
-                            || $.isFunction (this.lval.value[this.rval.value]);
-
             this.update = this.update.bind (this);
             this.checkconst (this.update, this.lval, this.rval);
+        },
+        isreadonly: function (value)
+        {
+            return (!$.isPlainObject (this.array)
+                        && !$.isArray (this.array))
+                    || $.isFunction (this.array[this.index]);
         },
         update: function ()
         {
             if ((this.array != this.lval.value) || (this.index != this.rval.value))
             {
-                if (!this.readonly
+                if (!this.isreadonly ()
                     && (typeof (this.array) != 'undefined')
                     && (typeof (this.index) != 'undefined'))
                 {
@@ -527,7 +532,7 @@
                 this.array = this.lval.value;
                 this.index = this.rval.value;
 
-                if (!this.readonly)
+                if (!this.isreadonly ())
                     watcher.watch (this.array, this.index, this.update);
             }
 
@@ -535,7 +540,7 @@
         },
         publish: function (value)
         {
-            if (!this.readonly)
+            if (!this.isreadonly ())
                 this.array[this.index] = value;
         }
     });
@@ -551,7 +556,6 @@
             this.post = post;
 
             this.update = this.update.bind (this);
-            //this.update ();
             this.checkconst (this.update, this.lval);
         },
         update: function ()
@@ -848,7 +852,14 @@
                     case 'dot':
                         this.next ();
                         this.expect ('name', false);
-                        lval = (new PropertyAccess (lval, this.token ().value));
+                        var name = this.token ().value;
+
+                        // search for property on the object
+                        // and create it as a null if not found
+                        if (!lval.value.hasOwnProperty (name))
+                            lval.value[name] = null;
+
+                        lval = (new PropertyAccess (lval, name));
                         this.next();
                         break;
 
