@@ -276,7 +276,7 @@
         'lt'        : '\\<',
         'gt'        : '\\>',
         'not'       : '\\!',
-        //'if'        : '\\?',       // not implemented, yet
+        'if'        : '\\?',
         'colon'     : '\\:',
         'comma'     : '\\,',
         'dot'       : '\\.',
@@ -290,11 +290,8 @@
         'invalid'   : '.+?'
     };
 
-    var precedence_table =
+    var descent_precedence =
     [
-        // infix
-        ['assign'],
-        //['if'],       // not implemented, yet
         ['or'],
         ['and'],
         ['eq','neq'],
@@ -305,15 +302,14 @@
 
     //-----------------------------------------------------
 
-    var operators1 =
+    var unary_operators =
     {
         sub : function (a) { return (-a); },
         not : function (a) { return (!a); }
     }
 
-    var operators2 =
+    var binary_operators =
     {
-        assign : function (a, b) { return (a = b); },
         add    : function (a, b) { return (a + b); },
         sub    : function (a, b) { return (a - b); },
         mul    : function (a, b) { return (a * b); },
@@ -351,12 +347,11 @@
         // ------------------------------------------------
         init: function (op, lval, rval)
         {
-            this.op   = operators2[op];
+            this.op   = binary_operators[op];
             this.lval = lval;
             this.rval = rval;
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.lval, this.rval);
         },
         update: function ()
@@ -387,6 +382,49 @@
                 if (!expr.isconst)
                     watcher.watch (expr, 'value', update)
             }
+
+            update ();
+        }
+    });
+
+    var AssignExpr = Expr.extend
+    ({
+        init: function (lval, rval)
+        {
+            this.lval = lval;
+            this.rval = rval;
+
+            this.update = this.update.bind (this);
+            this.checkconst (this.update, this.lval, this.rval);
+        },
+        update: function ()
+        {
+            this.value = this.rval.value;
+            this.lval.publish (this.rval.value);
+        }
+    });
+
+    var TernaryExpr = Expr.extend
+    ({
+        init: function (expr, lval, rval)
+        {
+            this.expr = expr;
+            this.lval = lval;
+            this.rval = rval;
+
+            this.update = this.update.bind (this);
+            this.checkconst (this.update, this.expr, this.lval, this.rval);
+        },
+        update: function ()
+        {
+            // "unpack" object primitives
+            var expr = this.expr.value.valueOf
+                ? this.expr.value.valueOf ()
+                : this.expr.value;
+
+            this.value = expr
+                ? this.lval.value
+                : this.rval.value;
         }
     });
 
@@ -395,11 +433,10 @@
     ({
         init: function (op, lval, rval)
         {
-            this.op   = operators1[op];
+            this.op   = unary_operators[op];
             this.lval = lval;
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.lval);
         },
         update: function ()
@@ -434,7 +471,6 @@
                             || $.isFunction (this.lval.value[this.name]);
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.lval);
         },
         update: function ()
@@ -475,7 +511,6 @@
                             || $.isFunction (this.lval.value[this.rval.value]);
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.lval, this.rval);
         },
         update: function ()
@@ -516,7 +551,7 @@
             this.post = post;
 
             this.update = this.update.bind (this);
-            this.update ();
+            //this.update ();
             this.checkconst (this.update, this.lval);
         },
         update: function ()
@@ -548,7 +583,6 @@
             this.values = values;
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.values);
         },
         update: function ()
@@ -574,7 +608,6 @@
                 exprs.push (this.values[key]);
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, exprs);
         },
         update: function ()
@@ -603,7 +636,6 @@
                 throw ['invalid call', this];
 
             this.update = this.update.bind (this);
-            this.update ();
             this.checkconst (this.update, this.lval.lval, this.args);
         },
         update: function ()
@@ -644,7 +676,7 @@
             if (this.peek ('end'))
                 return (new ConstantExpr (null));
 
-            var value = this.descent_parser (0);
+            var value = this.parse_outer ();
             this.expect ('end');
 
             return value;
@@ -714,9 +746,43 @@
             throw 'parse error: '+message;
         },
         // ------------------------------------------------
+        parse_outer: function ()
+        {
+            return this.parse_assign_expr ();
+        },
+        parse_assign_expr: function ()
+        {
+            var lval = this.parse_ternary_expr ();
+
+            if (!lval) return null;
+
+            while (this.peek ('assign'))
+            {
+                this.next ();
+                lval = (new AssignExpr (lval, this.parse_outer ()));
+            }
+
+            return lval;
+        },
+        parse_ternary_expr: function ()
+        {
+            var expr = this.descent_parser (0);
+
+            if (!expr) return null;
+
+            while (this.peek ('if'))
+            {
+                this.next ();
+                var lval = this.parse_outer ();
+                this.expect ('colon');
+                expr = (new TernaryExpr (expr, lval, this.parse_outer ()));
+            }
+
+            return expr;
+        },
         descent_parser: function (level)
         {
-            if (typeof (precedence_table[level]) == 'undefined')
+            if (typeof (descent_precedence[level]) == 'undefined')
                 return this.parse_unary_expr ();
 
             var lval = this.descent_parser (level + 1);
@@ -727,11 +793,11 @@
             {
                 var token = this.token ();
 
-                if (precedence_table[level].indexOf (token.type) == -1)
+                if (descent_precedence[level].indexOf (token.type) == -1)
                     break;
 
                 this.next ();
-                lval = (new Expr (token.type, lval, this.descent_parser (level)));
+                lval = (new Expr (token.type, lval, this.parse_outer ()));
             }
 
             return lval;
@@ -788,7 +854,7 @@
 
                     case 'lbracket':
                         this.next ();
-                        var index= this.descent_parser (0);
+                        var index = this.parse_outer ();
                         this.expect ('rbracket');
                         lval = (new IndexAccess (lval, index));
                         break;
@@ -817,7 +883,7 @@
                 if (this.peek ('rparen'))
                     break;
 
-                args.push (this.descent_parser (0));
+                args.push (this.parse_outer ());
             }
             while (this.peek ('comma'));
 
@@ -864,7 +930,7 @@
 
                 case 'lparen':
                     this.next ();
-                    var expr = this.descent_parser (0);
+                    var expr = this.parse_outer ();
                     this.expect ('rparen');
                     return expr;
                     break;
@@ -880,7 +946,7 @@
                         scope = scope.$parent;
 
                     // we are at the outer scope, still not found:
-                    // create it as null
+                    // create it as a null on the outermost scope
                     if (!scope.hasOwnProperty (name))
                         scope[name] = null;
 
@@ -911,7 +977,7 @@
                 if (this.peek ('rbracket'))
                     break;
 
-                value.push (this.descent_parser (0));
+                value.push (this.parse_outer ());
             }
             while (this.peek ('comma'));
 
@@ -941,7 +1007,7 @@
 
                 this.expect ('colon');
 
-                value[key] = this.descent_parser (0);
+                value[key] = this.parse_outer ();
             }
             while (this.peek ('comma'));
 
