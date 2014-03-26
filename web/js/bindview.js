@@ -855,9 +855,9 @@
                         var name = this.token ().value;
 
                         // search for property on the object
-                        // and create it as a null if not found
+                        // and create it as an empty string if not found
                         if (!lval.value.hasOwnProperty (name))
-                            lval.value[name] = null;
+                            lval.value[name] = '';
 
                         lval = (new PropertyAccess (lval, name));
                         this.next();
@@ -957,9 +957,9 @@
                         scope = scope.$parent;
 
                     // we are at the outer scope, still not found:
-                    // create it as a null on the outermost scope
+                    // create it as an empty string on the outermost scope
                     if (!scope.hasOwnProperty (name))
-                        scope[name] = null;
+                        scope[name] = '';
 
                     return (new PropertyAccess
                         (
@@ -1353,6 +1353,8 @@
                                 if (this.iterated[prop].scope[this.arg] != collection[prop])
                                 {
                                     this.iterated[prop].proxy.src (collection, prop);
+                                    this.iterated[prop].scope['$index'] = new Number (prop);
+                                    this.iterated[prop].scope['$key']   = new String (prop);
                                     this.iterated[prop].scope[this.arg] = collection[prop];
                                 }
                                 continue;
