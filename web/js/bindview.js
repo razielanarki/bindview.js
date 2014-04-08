@@ -302,6 +302,12 @@
 
     //-----------------------------------------------------
 
+    // unwrap primitive wrapper objects
+    var unwrap = function (value)
+    {
+        return (value.valueOf ? value.valueOf () : value);
+    };
+
     var unary_operators =
     {
         sub : function (a) { return (-a); },
@@ -355,7 +361,7 @@
         },
         update: function ()
         {
-            this.value = this.op (this.lval.value, this.rval.value);
+            this.value = this.op (unwrap (this.lval.value), unwrap (this.rval.value));
         },
         publish: function (value)
         {
@@ -373,7 +379,7 @@
                     exprs.push (arg);
             }
 
-            this.isconst = true;
+            this.isconst = false;
             for (var i = 0, expr; expr = exprs[i]; i++)
             {
                 this.isconst = this.isconst && !!expr.isconst;
@@ -395,7 +401,7 @@
             this.rval = rval;
 
             this.update = this.update.bind (this);
-            this.checkconst (this.update, this.lval, this.rval);
+            this.checkconst (this.update, this.rval);
         },
         update: function ()
         {
@@ -418,12 +424,7 @@
         },
         update: function ()
         {
-            // unwrap primitive wrappers
-            var expr = this.expr.value.valueOf
-                ? this.expr.value.valueOf ()
-                : this.expr.value;
-
-            this.value = expr
+            this.value = unwrap (this.expr.value)
                 ? this.lval.value
                 : this.rval.value;
         }
@@ -442,7 +443,7 @@
         },
         update: function ()
         {
-            this.value = this.op (this.lval.value);
+            this.value = this.op (unwrap (this.lval.value));
         }
     })
 
@@ -801,7 +802,7 @@
                     break;
 
                 this.next ();
-                lval = (new Expr (token.type, lval, this.parse_outer ()));
+                lval = (new Expr (token.type, lval, this.descent_parser (level)));
             }
 
             return lval;
