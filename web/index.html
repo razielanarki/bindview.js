@@ -6,7 +6,7 @@
 
     <title>bindview.js</title>
 
-    <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
     <script type="text/javascript" src="js/class.js"></script>
     <script type="text/javascript" src="js/poly.js"></script>
     <script type="text/javascript" src="js/bindview.js"></script>
@@ -29,12 +29,14 @@
 
 <h1>bindview.js</h1>
 
+<!--  -->
+
 <h2>basic demo</h2>
 
     <div id="demo1" class="demo">
         Name:
         <input type="text" bind-value="name" />
-        <h3 bind-show="name">Hey ummm.... {{ ('' + name).toUpperCase() }}! Hello!</h3>
+        <h3 bind-show="name">Hey ummm.... {{ name.toUpperCase() }}! Hello!</h3>
     </div>
 
     <script type="text/javascript">
@@ -54,6 +56,8 @@
                 {{ item }}
                 <input bind-value="item" />
                 <button bind-on-click="list.splice" bind-data-on-click="[$index, 1]">remove</button>
+                <button bind-on-click="swap" bind-data-on-click="[$index, $index - 1]" bind-show="$index > 0">move up</button>
+                <button bind-on-click="swap" bind-data-on-click="[$index, $index + 1]" bind-show="$index < list.length - 1">move down</button>
             </li>
         </ul>
         <button bind-on-click="list.push" bind-data-on-click="'elem' + list.length">add one</button>
@@ -63,71 +67,57 @@
 
         $(function ()
         {
-            $('#demo2').bindview
-            ({
+            var scope =
+            {
                 list: [ 'elev', 'even', 'elem', 'ents'],
                 to_json: function (object)
                 {
                     return 'json: '+JSON.stringify (object, null, 4);
+                },
+                swap: function (i, j)
+                {
+                    var t = scope.list[i];
+                    scope.list[i] = scope.list[j];
+                    scope.list[j] = t;
                 }
-            });
+            }
+
+            $('#demo2').bindview (scope);
         });
 
     </script>
 
-<h2>select / multiselect / input / radio</h2>
+<!--  -->
+
+<h2>select / radio</h2>
+
+<!--  -->
 
     <div id="demo3" class="demo">
         <select bind-repeat-option="options" bind-value="selected">
             <option bind-value="$index">{{ option }}</option>
         </select>
-        : {{ ''+selected }} :
+        : {{ to_json(selected) }} :
         <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
         <button bind-on-click="swap">change</button>
         <button bind-on-click="log">log</button>
         <button bind-on-click="reset">reset</button>
     </div>
 
-    <script type="text/javascript">
-
-        $(function ()
-        {
-            var scope =
-            {
-                selected : 1,
-                options  : ['option1', 'option2', 'option3'],
-                options2 : ['hello', 'kitty', 'y are u', 'gritty'],
-                swap : function ()
-                {
-                    var t = scope.options;
-                    scope.options  = scope.options2;
-                    scope.options2 = t;
-                },
-                reset: function ()
-                {
-                    scope.selected = 0;
-                },
-                log: function ()
-                {
-                    console.log ('log', this, scope);
-                },
-            }
-
-            $('#demo3').bindview (scope);
-        });
-
-    </script>
+<!--  -->
 
     <div id="demo4" class="demo">
         <div bind-repeat-option="options">
             <label>
-                <input type="radio" name="option" bind-checked="selected == $index" bind-to="selected" bind-value="$index" />
+                <input type="radio" name="option" bind-prop-checked="selected == $index" bind-to="selected" bind-value="$index" />
                 {{ option }}
                 <input bind-value="option" />
+                : {{ $index.toString() }}
+                - {{ selected == $index }}
             </label>
             <br />
         </div>
-        : {{ ''+selected }} :
+        : {{ to_json(selected) }} :
         <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
         <button bind-on-click="swap">change</button>
         <button bind-on-click="log">log</button>
@@ -140,7 +130,7 @@
         {
             var scope =
             {
-                selected : 1,
+                selected : 2,
                 options  : ['option1', 'option2', 'option3'],
                 options2 : ['hello', 'kitty', 'y are u', 'gritty'],
                 swap : function ()
@@ -153,7 +143,7 @@
                 },
                 reset: function ()
                 {
-                    scope.selected = 0;
+                    scope.selected = 1;
                 },
                 log: function ()
                 {
@@ -161,66 +151,43 @@
                 },
                 to_json: function (object)
                 {
-                    return 'json: '+JSON.stringify (object, null, 4);
+                    return JSON.stringify (object, null, 4);
                 }
             }
 
+            $('#demo3').bindview (scope);
             $('#demo4').bindview (scope);
         });
 
     </script>
 
+<!--  -->
+
+<h2>multiselect / checkboxes</h2>
+
     <div id="demo3m" class="demo">
         <select bind-repeat-option="options" bind-value="selected" multiple>
             <option bind-value="$index">{{ option }}</option>
         </select>
-        : {{ ''+selected }} :
-        <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
+        : {{ to_json(selected) }} :
+        <button bind-on-click="add" bind-data-on-click="'option' + (options.length + 1)">add one</button>
         <button bind-on-click="swap">change</button>
         <button bind-on-click="log">log</button>
         <button bind-on-click="reset">reset</button>
     </div>
-
-    <script type="text/javascript">
-
-        $(function ()
-        {
-            var scope =
-            {
-                selected : 1,
-                options  : ['option1', 'option2', 'option3'],
-                options2 : ['hello', 'kitty', 'y are u', 'gritty'],
-                swap : function ()
-                {
-                    var t = scope.options;
-                    scope.options  = scope.options2;
-                    scope.options2 = t;
-                },
-                reset: function ()
-                {
-                    scope.selected = 0;
-                },
-                log: function ()
-                {
-                    console.log ('log', this, scope);
-                }
-            }
-
-            $('#demo3m').bindview (scope);
-        });
-
-    </script>
 
     <div id="demo4m" class="demo">
         <div bind-repeat-option="options">
             <label>
-                <input type="checkbox" name="options" bind-checked="selected == $index" bind-to="selected" bind-value="$index" />
+                <input type="checkbox" name="options" bind-prop-checked="selected.includes($index)" bind-to="selected" bind-value="$index" />
                 {{ option }}
+                : {{ $index.toString() }}
+                - {{ selected.includes($index) }}
             </label>
             <br />
         </div>
-        : {{ ''+selected }} :
-        <button bind-on-click="options.push" bind-data-on-click="'option' + (options.length + 1)">add one</button>
+        : {{ to_json(selected) }} :
+        <button bind-on-click="add" bind-data-on-click="'option' + (options.length + 1)">add one</button>
         <button bind-on-click="swap">change</button>
         <button bind-on-click="log">log</button>
         <button bind-on-click="reset">reset</button>
@@ -232,7 +199,7 @@
         {
             var scope =
             {
-                selected : 1,
+                selected : [1],
                 options  : ['option1', 'option2', 'option3'],
                 options2 : ['hello', 'kitty', 'y are u', 'gritty'],
                 swap : function ()
@@ -241,16 +208,25 @@
                     scope.options  = scope.options2;
                     scope.options2 = t;
                 },
+                add: function (item)
+                {
+                    scope.options.push (item);
+                },
                 reset: function ()
                 {
-                    scope.selected = 0;
+                    scope.selected = [0,2];
                 },
                 log: function ()
                 {
                     console.log ('log', this, scope);
                 },
+                to_json: function (object)
+                {
+                    return JSON.stringify (object, null, 4);
+                }
             }
 
+            $('#demo3m').bindview (scope);
             $('#demo4m').bindview (scope);
         });
 
@@ -280,7 +256,7 @@
                 },
                 to_json: function (object)
                 {
-                    return 'json: '+JSON.stringify (object, null, 4);
+                    return JSON.stringify (object, null, 4);
                 }
             }
 
@@ -311,7 +287,7 @@
                 },
                 to_json: function (object)
                 {
-                    return 'json: '+JSON.stringify (object, null, 4);
+                    return JSON.stringify (object, null, 4);
                 }
             }
 
@@ -320,6 +296,7 @@
 
     </script>
 
+<!--  -->
 
 </body>
 

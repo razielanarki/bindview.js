@@ -31,15 +31,6 @@
             return this.weakrefs[object[this.id]];
         },
         // --------
-        get: function (object, property)
-        {
-            return object[property];
-        },
-        set: function (object, property, value)
-        {
-            object[property] = value;
-        },
-        // --------
         watch: function (object, property, handler)
         {
             // -- array length
@@ -77,19 +68,23 @@
                         get : function () { return value; },
                         set : function (newValue)
                         {
-                            if (value != newValue)
-                            {
-                                var oldValue = value;
-                                value = newValue;
+                            if (value == newValue)
+                                return;
 
-                                for (var i = 0, callback; callback = callbacks[property][i]; i++)
-                                    callback (newValue);
+                            var oldValue = value;
 
-                                self.unwatch_mutations (oldValue, object[this.id], property);
-                                self.watch_mutations (newValue, object[this.id], property);
+                            //self.unwatch_mutations (oldValue, object[this.id], property);
+                            //self.watch_mutations (newValue, object[this.id], property);
 
-                                return newValue;
-                            }
+                            //da hack?
+                            //orig prop needs to be set for callbacks before setter returns :/
+                            value = newValue;
+
+                            for (var i = 0, callback; callback = callbacks[property][i]; i++)
+                                callback (newValue);
+
+                            // setting the prop again
+                            return newValue;
                         }
                     });
             }
@@ -308,6 +303,8 @@
         return (value.valueOf ? value.valueOf () : value);
     };
 
+    //-----------------------------------------------------
+
     var unary_operators =
     {
         sub : function (a) { return (-a); },
@@ -477,7 +474,7 @@
                         && !$.isArray (this.object))
                     || $.isFunction (this.object[this.name]);
         },
-        update: function ()
+        update: function (x)
         {
             if (this.object != this.lval.value)
             {
@@ -648,7 +645,9 @@
             var args = [];
 
             for (var i = 0, expr; expr = this.args[i]; i++)
+            {
                 args[i] = expr.value;
+            }
 
             this.value = this.lval.value.apply (this.lval.lval.value, args);
         }
@@ -857,7 +856,8 @@
 
                         // search for property on the object
                         // and create it as an empty string if not found
-                        if (!lval.value.hasOwnProperty (name))
+                        //if (!lval.value.hasOwnProperty (name))
+                        if (lval.value[name] == undefined)
                             lval.value[name] = '';
 
                         lval = (new PropertyAccess (lval, name));
@@ -1035,6 +1035,20 @@
     // Binding API
     //-----------------------------------------------------
 
+    // cast input node value strings to ints (in arrays for checkboxes too)
+    var cast = function (value)
+    {
+        value = $.isArray (value)
+            ? $.map (value, cast)
+            : value;
+
+        return $.isNumeric (value)
+            ? unwrap (Number (value))
+            : value;
+    };
+
+    //-----------------------------------------------------
+
     var Binder = Class.extend
     ({
         init: function (view, scope, element, type, arg, attr)
@@ -1055,6 +1069,8 @@
         },
         val: function ()
         {
+            var result;
+
             // handle checkboxes with the same name as a multiselect
             // (ie: return an array of selected values)
             if (this.element.type == 'checkbox')
@@ -1063,15 +1079,19 @@
 
                 if (checkboxes.length > 1)
                 {
-                    return $.map (checkboxes, function (checkbox)
+                    result = $.map (checkboxes, function (checkbox)
                     {
                         if ($(checkbox).is(':checked'))
+                        {
                             return checkbox.value;
+                        }
                     });
                 }
             }
+            else
+                result = $(this.element).val ();
 
-            return $(this.element).val ();
+            return cast (result);
         },
         // --------
         bind: function ()
@@ -1219,7 +1239,14 @@
                 ({
                     render: function (value)
                     {
-                        $(this.element).attr (this.type, (value || undefined));
+                        $(this.element).attr (this.type, value);
+                    }
+                }),
+            'prop-*': Binder.extend
+                ({
+                    render: function (value)
+                    {
+                        $(this.element).prop (this.arg, value);
                     }
                 }),
             'show': Binder.extend
@@ -1280,7 +1307,19 @@
                     {
                         if (!$(this.element).is (':focus'))
                             $(this.element).val (value);
-                    }
+                    },
+                    val: function ()
+                    {
+                        // override checbox->multiselect array extraction, and return a simple value
+                        var result = $(this.element).val ();
+
+                        return cast (result);
+                    },
+                    // use our val()
+                    publish: function ()
+                    {
+                        this.expr.publish (this.val ());
+                    },
                 }),
             'data-*': Binder.extend
                 ({
@@ -1353,9 +1392,9 @@
                             {
                                 if (this.iterated[prop].scope[this.arg] != collection[prop])
                                 {
-                                    this.iterated[prop].proxy.src (collection, prop);
-                                    this.iterated[prop].scope['$index'] = new Number (prop);
-                                    this.iterated[prop].scope['$key']   = new String (prop);
+                                    this.iterated[prop].proxy.dst (collection, prop);
+                                    this.iterated[prop].scope['$index'] = unwrap (new Number (prop));
+                                    this.iterated[prop].scope['$key']   = unwrap (new String (prop));
                                     this.iterated[prop].scope[this.arg] = collection[prop];
                                 }
                                 continue;
@@ -1367,8 +1406,8 @@
                                 scope    = {};
 
                             scope['$parent'] = this.scope;
-                            scope['$index']  = new Number (prop);
-                            scope['$key']    = new String (prop);
+                            scope['$index']  = unwrap (new Number (prop));
+                            scope['$key']    = unwrap (new String (prop));
                             scope[this.arg]  = collection[prop];
 
                             this.iterated[prop] = new View (elements, scope);
