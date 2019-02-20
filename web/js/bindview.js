@@ -73,12 +73,13 @@
 
                             var oldValue = value;
 
-                            //self.unwatch_mutations (oldValue, object[this.id], property);
-                            //self.watch_mutations (newValue, object[this.id], property);
+                            self.unwatch_mutations (oldValue, object[this.id], property);
+                            self.watch_mutations (newValue, object[this.id], property);
 
                             //da hack?
                             //orig prop needs to be set for callbacks before setter returns :/
                             value = newValue;
+                            //object[property] = newValue;
 
                             for (var i = 0, callback; callback = callbacks[property][i]; i++)
                                 callback (newValue);
@@ -857,7 +858,7 @@
                         // search for property on the object
                         // and create it as an empty string if not found
                         //if (!lval.value.hasOwnProperty (name))
-                        if (lval.value[name] == undefined)
+                        if (typeof (lval.value[name]) == 'undefined')
                             lval.value[name] = '';
 
                         lval = (new PropertyAccess (lval, name));
@@ -1371,6 +1372,7 @@
                     },
                     render: function (collection)
                     {
+                        var last;
                         collection = collection || {};
 
                         // update props
@@ -1397,6 +1399,7 @@
                                     this.iterated[prop].scope['$key']   = unwrap (new String (prop));
                                     this.iterated[prop].scope[this.arg] = collection[prop];
                                 }
+                                last = this.iterated[prop];
                                 continue;
                             }
 
@@ -1413,7 +1416,12 @@
                             this.iterated[prop] = new View (elements, scope);
                             this.iterated[prop].proxy = new Proxy (scope, this.arg, collection, prop);
 
-                            this.element.appendChild (fragment);
+                            if (typeof(last) != 'undefined')
+                                last.element.last().after (fragment);
+                            else
+                                this.element.insertBefore (fragment, this.element.firstChild);
+
+                            last = this.iterated[prop];
                         }
 
                         // remove old props not present in new collection
