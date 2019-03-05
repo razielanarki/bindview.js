@@ -1088,6 +1088,11 @@
                         }
                     });
                 }
+                else
+                if (!$(this.element).is(':checked'))
+                {
+                    result = '';
+                }
             }
             else
                 result = $(this.element).val ();
