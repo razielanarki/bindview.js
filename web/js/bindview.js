@@ -1070,7 +1070,7 @@
         },
         val: function ()
         {
-            var result;
+            var result = $(this.element).val ();
 
             // handle checkboxes with the same name as a multiselect
             // (ie: return an array of selected values)
@@ -1094,8 +1094,6 @@
                     result = '';
                 }
             }
-            else
-                result = $(this.element).val ();
 
             return cast (result);
         },
@@ -1331,7 +1329,7 @@
                 ({
                     render: function (value)
                     {
-                        $(this.element).data (this.arg, (value || undefined));
+                        $(this.element).data (this.arg, (value));
                     }
                 }),
             'on-*': Binder.extend
